@@ -1,74 +1,71 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-
-
 contract MultiSigWallet {
-    event Deposit(address indexed sender, uint amount, uint balance);
-    event ProposalSubmitted(
-        uint indexed transactionId,
-        address indexed destination,
-        uint value,
-        bytes data
-    );
-    event Confirmation(address indexed owner, uint indexed transactionId);
-    event Revocation(address indexed owner, uint indexed transactionId);
-    event Execution(uint indexed transactionId);
-    event ExecutionFailure(uint indexed transactionId);
+    // Standardized event names for off-chain monitoring
+    event Deposit(address indexed sender, uint256 amount, uint256 balance);
+    event Submission(uint256 indexed transactionId); //
+    event Confirmation(address indexed owner, uint256 indexed transactionId); //
+    event Revocation(address indexed owner, uint256 indexed transactionId); //
+    event ExecutionSuccess(uint256 indexed transactionId); //
+    event ExecutionFailure(uint256 indexed transactionId); //
+    event OwnerAdded(address indexed owner); //
+    event OwnerRemoved(address indexed owner); //
+    event RequirementChanged(uint256 indexed required); //
 
     address[] public owners;
     mapping(address => bool) public isOwner;
-    uint public requiredConfirmations;
+    uint256 public required; // Named specifically to match Item 1 requirement
 
     struct Transaction {
         address destination;
-        uint value;
+        uint256 value;
         bytes data;
         bool executed;
     }
 
-    // mapping from transactionId => Transaction
     Transaction[] public transactions;
-
-    // mapping from transactionId => owner => bool
-    mapping(uint => mapping(address => bool)) public confirmations;
+    // transactionId => owner => bool
+    mapping(uint256 => mapping(address => bool)) public confirmations;
 
     modifier onlyOwner() {
         require(isOwner[msg.sender], "Not an owner");
         _;
     }
 
-    modifier txExists(uint _transactionId) {
+    // Critical for governance security: only the contract itself can call administrative functions
+    modifier onlyWallet() {
+        require(msg.sender == address(this), "Only wallet can call this");
+        _;
+    }
+
+    modifier txExists(uint256 _transactionId) {
         require(_transactionId < transactions.length, "Transaction does not exist");
         _;
     }
 
-    modifier notExecuted(uint _transactionId) {
+    modifier notExecuted(uint256 _transactionId) {
         require(!transactions[_transactionId].executed, "Transaction already executed");
         _;
     }
 
-    modifier notConfirmed(uint _transactionId) {
+    modifier notConfirmed(uint256 _transactionId) {
         require(!confirmations[_transactionId][msg.sender], "Transaction already confirmed");
         _;
     }
 
-    constructor(address[] memory _owners, uint _requiredConfirmations) {
-        require(_owners.length > 0, "Owners required");
-        require(
-            _requiredConfirmations > 0 && _requiredConfirmations <= _owners.length,
-            "Invalid required confirmations"
-        );
+    constructor(address[] memory _owners, uint256 _required) {
+        require(_owners.length > 0, "Owners required"); //
+        require(_required > 0 && _required <= _owners.length, "Invalid required confirmations"); //
 
-        for (uint i = 0; i < _owners.length; i++) {
+        for (uint256 i = 0; i < _owners.length; i++) {
             address owner = _owners[i];
             require(owner != address(0), "Invalid owner");
             require(!isOwner[owner], "Duplicate owner");
             isOwner[owner] = true;
             owners.push(owner);
         }
-
-        requiredConfirmations = _requiredConfirmations;
+        required = _required;
     }
 
     receive() external payable {
@@ -77,10 +74,10 @@ contract MultiSigWallet {
 
     function submitTransaction(
         address _destination,
-        uint _value,
-        bytes memory _data
+        uint256 _value,
+        bytes calldata _data
     ) public onlyOwner {
-        uint transactionId = transactions.length;
+        uint256 transactionId = transactions.length;
         transactions.push(
             Transaction({
                 destination: _destination,
@@ -89,10 +86,10 @@ contract MultiSigWallet {
                 executed: false
             })
         );
-        emit ProposalSubmitted(transactionId, _destination, _value, _data);
+        emit Submission(transactionId); //
     }
 
-    function confirmTransaction(uint _transactionId)
+    function confirmTransaction(uint256 _transactionId)
         public
         onlyOwner
         txExists(_transactionId)
@@ -100,69 +97,87 @@ contract MultiSigWallet {
         notConfirmed(_transactionId)
     {
         confirmations[_transactionId][msg.sender] = true;
-        emit Confirmation(msg.sender, _transactionId);
+        emit Confirmation(msg.sender, _transactionId); //
     }
 
-    function revokeConfirmation(uint _transactionId)
+    function revokeConfirmation(uint256 _transactionId)
         public
         onlyOwner
         txExists(_transactionId)
         notExecuted(_transactionId)
     {
-        require(confirmations[_transactionId][msg.sender], "Transaction not confirmed by you");
+        require(confirmations[_transactionId][msg.sender], "Transaction not confirmed");
         confirmations[_transactionId][msg.sender] = false;
-        emit Revocation(msg.sender, _transactionId);
+        emit Revocation(msg.sender, _transactionId); //
     }
 
-    function executeTransaction(uint _transactionId)
+    function executeTransaction(uint256 _transactionId)
         public
         onlyOwner
         txExists(_transactionId)
         notExecuted(_transactionId)
     {
-        uint confirmationCount = 0;
-        for (uint i = 0; i < owners.length; i++) {
+        uint256 count = 0;
+        for (uint256 i = 0; i < owners.length; i++) {
             if (confirmations[_transactionId][owners[i]]) {
-                confirmationCount++;
+                count += 1;
             }
         }
 
-        require(
-            confirmationCount >= requiredConfirmations,
-            "Not enough confirmations"
-        );
+        require(count >= required, "Not enough confirmations"); //
 
         Transaction storage _tx = transactions[_transactionId];
-        _tx.executed = true;
+        _tx.executed = true; // Prevents re-entrancy
 
         (bool success, ) = _tx.destination.call{value: _tx.value}(_tx.data);
 
         if (success) {
-            emit Execution(_transactionId);
+            emit ExecutionSuccess(_transactionId); //
         } else {
-            emit ExecutionFailure(_transactionId);
+            _tx.executed = false; // Revert state if execution fails
+            emit ExecutionFailure(_transactionId); //
         }
     }
 
-    function getTransactionCount() public view returns (uint) {
-        return transactions.length;
+    // GOVERNANCE FUNCTIONS: Must be proposed and executed via multi-sig
+
+    function addOwner(address _newOwner) external onlyWallet {
+        require(_newOwner != address(0), "Invalid owner");
+        require(!isOwner[_newOwner], "Owner already exists");
+        isOwner[_newOwner] = true;
+        owners.push(_newOwner);
+        emit OwnerAdded(_newOwner);
     }
 
-    function getTransaction(uint _transactionId)
-        public
-        view
-        returns (
-            address destination,
-            uint value,
-            bytes memory data,
-            bool executed
-        )
-    {
-        Transaction storage _tx = transactions[_transactionId];
-        return (_tx.destination, _tx.value, _tx.data, _tx.executed);
+    function removeOwner(address _owner) external onlyWallet {
+        require(isOwner[_owner], "Not an owner");
+        isOwner[_owner] = false;
+        for (uint256 i = 0; i < owners.length; i++) {
+            if (owners[i] == _owner) {
+                owners[i] = owners[owners.length - 1];
+                owners.pop();
+                break;
+            }
+        }
+        if (required > owners.length) {
+            changeRequirement(owners.length);
+        }
+        emit OwnerRemoved(_owner);
     }
+
+    function changeRequirement(uint256 _required) public onlyWallet {
+        require(_required > 0 && _required <= owners.length, "Invalid requirement");
+        required = _required;
+        emit RequirementChanged(_required);
+    }
+
+    // VIEW FUNCTIONS
 
     function getOwners() public view returns (address[] memory) {
         return owners;
+    }
+
+    function getTransactionCount() public view returns (uint256) {
+        return transactions.length;
     }
 }

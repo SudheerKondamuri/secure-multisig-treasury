@@ -1,0 +1,32 @@
+body {
+  margin: 0;
+  background: #f7fafc;
+  color: #0f172a;
+}
+
+button {
+  background: #2563eb;
+  color: white;
+  border: none;
+  padding: 8px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+input, textarea {
+  padding: 6px 8px;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.card {
+  background: white;
+  border-radius: 10px;
+  padding: 12px;
+  box-shadow: 0 1px 3px rgba(2,6,23,0.08);
+  margin-bottom: 12px;
+}
+
+.muted { color: #64748b }

@@ -1,149 +1,203 @@
-# Secure Multi-Sig Treasury
+# 🔐 Secure Multi-Sig Treasury Management System
 
-A secure, multi-signature treasury system built with Hardhat, Ethers.js, and a React frontend. This project provides a robust solution for managing shared funds on the Ethereum blockchain, requiring multiple owners to approve transactions before they can be executed.
+A production-ready decentralized application (DApp) featuring a secure multi-signature wallet for treasury management. Built with Hardhat, Solidity, React, TypeScript, Wagmi, and TanStack Query.
 
-## Table of Contents
+## 📋 Overview
 
-- [Architecture](#architecture)
-- [Features](#features)
-- [Getting Started](#getting-started)
-  - [Prerequisites](#prerequisites)
-  - [Installation](#installation)
-- [Usage](#usage)
-  - [Running the Local Network](#running-the-local-network)
-  - [Deploying the Contract](#deploying-the-contract)
-  - [Starting the Frontend](#starting-the-frontend)
-- [Testing](#testing)
-- [Project Structure](#project-structure)
+This project implements a full-featured multi-signature wallet smart contract with a modern React frontend. Multi-sig wallets require multiple owners to approve transactions before execution, providing enhanced security for managing shared digital assets.
 
-## Architecture
+### Key Features
 
-The system is composed of two main parts:
+- **Smart Contract**: Solidity-based multi-signature wallet with proposal-based governance
+- **Access Control**: M-of-N signature requirements with owner management
+- **Secure Execution**: Checks-Effects-Interactions pattern to prevent re-entrancy
+- **Event-Driven Frontend**: Real-time updates using contract event listeners
+- **Modern Stack**: React + TypeScript + Wagmi + TanStack Query + Viem
+- **Docker Support**: One-command setup with Docker Compose
+- **Comprehensive Tests**: Full test coverage for all contract functions
 
-1.  **Smart Contract**: A Solidity-based `MultiSigWallet` contract that holds the funds and enforces the multi-signature policy.
-2.  **Frontend**: A React application that provides a user-friendly interface for interacting with the smart contract.
-
-The frontend communicates with the Ethereum network (and our smart contract) using [Wagmi](https://wagmi.sh/) and [Viem](https://viem.sh/), which provide React hooks and utilities for wallet connections, contract interactions, and more.
-
-## Features
-
--   **Multi-Signature Control**: Transactions require a minimum number of confirmations from a predefined set of owners.
--   **Transaction Proposals**: Owners can submit transaction proposals for other owners to review and approve.
--   **On-Chain Execution**: Once a transaction has enough confirmations, it can be executed on the blockchain.
--   **Fund Management**: Easily deposit and manage Ether in the treasury.
--   **Clear UI**: A simple and intuitive React interface for all treasury operations.
-
-## Getting Started
+## 🚀 Quick Start
 
 ### Prerequisites
 
--   [Node.js](https://nodejs.org/) (v16 or later)
--   [Yarn](https://yarnpkg.com/) or [npm](https://www.npmjs.com/)
--   [Docker](https://www.docker.com/) and [Docker Compose](https://docs.docker.com/compose/)
+- **Docker** and **Docker Compose** (recommended)
+- OR **Node.js** 18+ and **npm** (for local development)
+- **MetaMask** or another Web3 wallet browser extension
 
-### Installation
+### Option 1: Docker Setup (Recommended)
 
-1.  **Clone the repository:**
+1. **Clone the repository**
+   ```bash
+   git clone <repository-url>
+   cd secure-multisig-treasury
+   ```
 
-    ```bash
-    git clone https://github.com/your-username/secure-multisig-treasury.git
-    cd secure-multisig-treasury
-    ```
+2. **Start all services**
+   ```bash
+   docker-compose up --build
+   ```
 
-2.  **Install root dependencies:**
+   This will:
+   - Start a local Hardhat blockchain node on port 8545
+   - Deploy the MultiSigWallet contract
+   - Start the React frontend on port 3000
 
-    ```bash
-    npm install
-    ```
+3. **Access the application**
+   - Frontend: http://localhost:3000
+   - Hardhat Node: http://localhost:8545
 
-3.  **Install frontend dependencies:**
+4. **Configure MetaMask**
+   - Network: Localhost 8545
+   - Chain ID: 1337
+   - RPC URL: http://localhost:8545
+   - Import test accounts using the private keys from Hardhat output
 
-    ```bash
-    cd frontend
-    npm install
-    ```
+### Option 2: Local Development Setup
 
-## Usage
+1. **Install backend dependencies**
+   ```bash
+   npm install
+   ```
 
-### Running the Local Network
+2. **Compile contracts**
+   ```bash
+   npm run compile
+   ```
 
-To simulate an Ethereum environment, we use a local Hardhat node, orchestrated with Docker.
+3. **Run tests**
+   ```bash
+   npm test
+   ```
+
+4. **Start Hardhat node** (in one terminal)
+   ```bash
+   npm run node
+   ```
+
+5. **Deploy contracts** (in another terminal)
+   ```bash
+   npm run deploy
+   ```
+
+6. **Install frontend dependencies**
+   ```bash
+   cd frontend
+   npm install
+   ```
+
+7. **Start frontend**
+   ```bash
+   npm run dev
+   ```
+
+8. **Access the application**
+   - Frontend: http://localhost:3000
+
+## 🔧 Smart Contract Functions
+
+### Core Functions
+
+- `submitTransaction(address to, uint256 value, bytes calldata data)` - Submit a new transaction proposal
+- `confirmTransaction(uint256 transactionId)` - Confirm a pending transaction
+- `revokeConfirmation(uint256 transactionId)` - Revoke your confirmation
+- `executeTransaction(uint256 transactionId)` - Execute a confirmed transaction
+
+### Governance Functions (Multi-Sig Only)
+
+These functions must be called via multi-sig proposals:
+
+- `addOwner(address owner)` - Add a new owner to the wallet
+- `removeOwner(address owner)` - Remove an existing owner
+- `changeRequirement(uint256 _required)` - Change the required confirmations
+
+### View Functions
+
+- `getOwners()` - Get list of all owners
+- `required()` - Get required number of confirmations
+- `isOwner(address)` - Check if an address is an owner
+- `getTransactionCount()` - Get total number of transactions
+
+## 🧪 Testing
+
+The project includes comprehensive tests covering all requirements:
 
 ```bash
-docker-compose up -d hardhat-node
+# Run all tests
+npm test
+
+# Run tests with gas reporting
+REPORT_GAS=true npm test
 ```
 
-This command starts a local blockchain instance in the background.
+### Test Coverage
 
-### Deploying the Contract
+- ✅ Deployment and initialization
+- ✅ ETH transaction proposals
+- ✅ ERC-20 transfer proposals
+- ✅ Transaction confirmation and revocation
+- ✅ Transaction execution with sufficient confirmations
+- ✅ Adding/removing owners via multi-sig
+- ✅ Changing confirmation requirements
+- ✅ Event emissions
+- ✅ Security checks and edge cases
 
-With the local network running, deploy the `MultiSigWallet` contract:
+## 🔒 Security Considerations
+
+### Smart Contract Security
+
+1. **Checks-Effects-Interactions Pattern**: State changes occur before external calls
+2. **Re-entrancy Protection**: Transactions marked as executed before external calls
+3. **Access Control**: Critical functions protected by `onlyOwner` and `onlyWallet` modifiers
+4. **Input Validation**: Comprehensive validation of all inputs
+5. **Event Logging**: All state changes emit events for transparency
+
+## 🐳 Docker Commands
 
 ```bash
-npx hardhat run scripts/deploy.ts --network localhost
+# Start all services
+docker-compose up
+
+# Start in detached mode
+docker-compose up -d
+
+# Rebuild and start
+docker-compose up --build
+
+# Stop all services
+docker-compose down
+
+# View logs
+docker-compose logs -f
 ```
 
-After deployment, a copy of the contract's ABI (`MultiSigWallet.json`) will be placed in the `frontend/src/abis` directory.
+## 📝 Environment Variables
 
-### Starting the Frontend
-
-The frontend is also run in a Docker container for consistency.
+Copy `.env.example` to `.env` and update values:
 
 ```bash
-docker-compose up -d frontend
+# Backend
+DEPLOYER_PRIVATE_KEY=0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80
+REACT_APP_CONTRACT_ADDRESS=<deployed_contract_address>
 ```
 
-The React app will be available at [http://localhost:3000](http://localhost:3000).
+## 🛠️ Available Scripts
 
-## Testing
+### Backend
 
-The project includes a comprehensive test suite for the smart contract using Chai and Mocha.
+- `npm run compile` - Compile smart contracts
+- `npm test` - Run tests
+- `npm run node` - Start local Hardhat node
+- `npm run deploy` - Deploy contracts to localhost
 
-To run the tests:
+### Frontend
 
-```bash
-npx hardhat test
-```
+- `npm run dev` - Start development server
+- `npm run build` - Build for production
 
-This will execute all test files in the `test/` directory against a fresh Hardhat network.
+## 📄 License
 
-## Project Structure
+This project is licensed under the ISC License.
 
-```
-secure-multisig-treasury/
-├── .env.example                # Documented env vars (DEPLOYER_KEY, CONTRACT_ADDRESS)
-├── .gitignore                  # Ignore node_modules, .env, artifacts, cache
-├── README.md                   # Documentation on setup, architecture, and usage
-├── docker-compose.yml          # Orchestrates Hardhat Node + Frontend
-├── Dockerfile.hardhat          # Docker setup for the local blockchain node
-├── hardhat.config.ts           # Hardhat configuration (networks, solidity version)
-├── package.json                # Root dependencies (Hardhat, Ethers, Waffle)
-├── tsconfig.json               # TypeScript config for Hardhat
-│
-├── contracts/
-│   └── MultiSigWallet.sol      # The main smart contract
-│
-├── scripts/
-│   └── deploy.ts               # Script to deploy contract to local/remote network
-│
-├── test/
-│   └── MultiSigWallet.test.ts  # Comprehensive tests (Chai/Mocha)
-│
-└── frontend/                   # The React Application
-    ├── Dockerfile.frontend     # Docker setup for the React app
-    ├── package.json            # Frontend dependencies (React, Wagmi, Viem)
-    ├── tsconfig.json
-    ├── public/
-    └── src/
-        ├── App.tsx             # Main component structure
-        ├── index.tsx           # Entry point
-        ├── abis/
-        │   └── MultiSigWallet.json  # Contract ABI (copied after compile)
-        ├── components/
-        │   ├── ConnectWallet.tsx    # Wallet connection button
-        │   ├── Dashboard.tsx        # Balances and owners list
-        │   ├── CreateProposal.tsx   # Form to submit transactions
-        │   └── ProposalList.tsx     # List of pending/executed transactions
-        └── hooks/
-            └── useMultiSig.ts       # Custom Wagmi hooks for contract interaction
-```
+---
+
+**Built with ❤️ for secure, decentralized treasury management**

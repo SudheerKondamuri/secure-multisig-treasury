@@ -1,0 +1,21 @@
+FROM node:18-alpine
+
+# Install dependencies for healthcheck
+RUN apk add --no-cache curl
+
+WORKDIR /app
+
+# Copy package files
+COPY package*.json ./
+
+# Install dependencies
+RUN npm install
+
+# Copy project files
+COPY . .
+
+# Expose Hardhat node port
+EXPOSE 8545
+
+# Default command (can be overridden by docker-compose)
+CMD ["npx", "hardhat", "node", "--hostname", "0.0.0.0"]

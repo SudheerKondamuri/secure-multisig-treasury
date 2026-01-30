@@ -9,6 +9,37 @@ services:
       - "8545:8545"
     volumes:
       - .:/app
+      - /app/node_modules
+    working_dir: /app
+    command: >
+      sh -c "npm install &&
+             npx hardhat compile &&
+             npx hardhat node --hostname 0.0.0.0"
+    healthcheck:
+      test: ["CMD", "sh", "-c", "curl -f -X POST -H 'Content-Type: application/json' --data '{\"jsonrpc\":\"2.0\",\"method\":\"eth_blockNumber\",\"params\":[],\"id\":1}' http://localhost:8545 || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+
+  hardhat-deploy:
+    build:
+      context: .
+      dockerfile: Dockerfile.hardhat
+    volumes:
+      - .:/app
+      - /app/node_modules
+    working_dir: /app
+    command: >
+      sh -c "sleep 30 &&
+             npm install &&
+             npx hardhat compile &&
+             npx hardhat run scripts/deploy.ts --network localhost"
+    depends_on:
+      hardhat-node:
+        condition: service_healthy
+    environment:
+      - HARDHAT_NETWORK=localhost
 
   frontend:
     build:
@@ -21,5 +52,14 @@ services:
       - /app/node_modules
     environment:
       - CHOKIDAR_USEPOLLING=true
+      - VITE_CONTRACT_ADDRESS=${REACT_APP_CONTRACT_ADDRESS:-0x5FbDB2315678afecb367f032d93F642f64180aa3}
     depends_on:
-      - hardhat-node
+      hardhat-node:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+

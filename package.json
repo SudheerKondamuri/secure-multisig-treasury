@@ -1,0 +1,36 @@
+{
+  "name": "secure-multisig-treasury",
+  "version": "1.0.0",
+  "description": "A secure, multi-signature treasury system built with Hardhat, Ethers.js, and a React frontend. This project provides a robust solution for managing shared funds on the Ethereum blockchain, requiring multiple owners to approve transactions before they can be executed.",
+  "homepage": "https://github.com/SudheerKondamuri/secure-multisig-treasury#readme",
+  "bugs": {
+    "url": "https://github.com/SudheerKondamuri/secure-multisig-treasury/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/SudheerKondamuri/secure-multisig-treasury.git"
+  },
+  "license": "ISC",
+  "author": "",
+  "main": "index.js",
+  "directories": {
+    "test": "test"
+  },
+  "scripts": {
+    "compile": "hardhat compile",
+    "test": "hardhat test",
+    "node": "hardhat node",
+    "deploy": "hardhat run scripts/deploy.ts --network localhost",
+    "deploy:local": "hardhat run scripts/deploy.ts --network hardhat"
+  },
+  "devDependencies": {
+    "@nomicfoundation/hardhat-toolbox": "^6.1.0",
+    "@openzeppelin/contracts": "^5.4.0",
+    "@types/node": "^22.19.7",
+    "chai": "^4.5.0",
+    "ethers": "^6.16.0",
+    "hardhat": "^2.28.4",
+    "mocha": "^11.7.5",
+    "typescript": "~5.8.0"
+  }
+}

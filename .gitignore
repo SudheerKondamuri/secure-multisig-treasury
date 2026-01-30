@@ -1,16 +1,22 @@
-# Dependencies
-node_modules
+# Node modules
+/node_modules
 
-# Environment variables
-.env
+# Compilation output
+/dist
 
-# Build artifacts
-artifacts
-cache
-dist
-build
+# pnpm deploy output
+/bundle
 
-# Logs
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
+# Hardhat Build Artifacts
+/artifacts
+
+# Hardhat compilation (v2) support directory
+/cache
+
+# Typechain output
+/types
+
+# Hardhat coverage reports
+/coverage
+
+

@@ -196,7 +196,7 @@ REACT_APP_CONTRACT_ADDRESS=<deployed_contract_address>
 
 ## 📄 License
 
-This project is licensed under the ISC License.
+This project is licensed under the MIT License.
 
 ---
 

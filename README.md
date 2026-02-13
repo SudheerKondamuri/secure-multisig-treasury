@@ -28,7 +28,7 @@ This project implements a full-featured multi-signature wallet smart contract wi
 
 1. **Clone the repository**
    ```bash
-   git clone <repository-url>
+   git clone https://github.com/SudheerKondamuri/secure-multisig-treasury
    cd secure-multisig-treasury
    ```
 
@@ -200,4 +200,4 @@ This project is licensed under the ISC License.
 
 ---
 
-**Built with ❤️ for secure, decentralized treasury management**
+
